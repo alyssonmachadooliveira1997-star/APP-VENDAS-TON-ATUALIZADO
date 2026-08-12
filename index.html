@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>Ton Indicações</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#F0F2F5;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;max-width:480px;margin:0 auto;min-height:100vh}
+input,select,textarea{font-family:inherit}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:99px}
+.tab-bar{display:flex;background:#fff;border-top:1px solid #E5E7EB;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:100;padding:4px 0 6px}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border:none;background:none;font-size:9px;font-weight:600;color:#9CA3AF;transition:color 0.2s}
+.tab-btn.active{color:#00A868}
+.tab-icon{font-size:20px;line-height:1}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:flex-end;justify-content:center;z-index:400;padding:0}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-handle{width:40px;height:4px;background:#E5E7EB;border-radius:99px;margin:0 auto 16px}
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.inp{width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #E5E7EB;font-size:14px;outline:none;margin-bottom:10px;background:#FAFAFA;transition:border-color 0.2s}
+.inp:focus{border-color:#00A868;background:#fff}
+.lbl{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px}
+.btn-green{width:100%;padding:14px;background:#00A868;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700}
+.btn-outline{padding:10px 16px;background:transparent;color:#00A868;border:1.5px solid #00A868;border-radius:10px;font-size:13px;font-weight:600}
+.section-title{font-size:13px;font-weight:700;color:#1A1A2E;margin-bottom:10px}
+.mtd-bar-bg{background:#E5E7EB;border-radius:99px;height:8px;overflow:hidden}
+.mtd-bar-fill{height:100%;border-radius:99px;transition:width 0.6s}
+select.sel{padding:9px 11px;border-radius:10px;border:1.5px solid #00A868;font-size:13px;font-weight:600;color:#00A868;background:#E6F7F1;outline:none;flex:1}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ── CONSTANTS & HELPERS ────────────────────────────────────────────────────────
+const CV={verde:"#00A868",vesc:"#007A4C",vfundo:"#E6F7F1",cinza:"#F0F2F5",texto:"#1A1A2E",suave:"#6B7280",branco:"#fff",verm:"#EF4444",amar:"#F59E0B",azul:"#3B82F6",roxo:"#8B5CF6"};
+function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+function getC(){return load("ton_com",{Smart:240,T3:200,bonus:100,cada:3});}
+function fmtR(v){return(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
+function fmtD(iso){return new Date(iso).toLocaleDateString("pt-BR",{day:"2-digit",month:"short"});}
+function fmtDH(iso){return new Date(iso).toLocaleDateString("pt-BR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});}
+function fmtHM(iso){return new Date(iso).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
+function chStr(a,m){return a+"-"+String(m+1).padStart(2,"0");}
+function nomeMesAno(a,m){return new Date(a,m,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});}
+function hoje(){return new Date();}
+function chAtual(){const d=hoje();return chStr(d.getFullYear(),d.getMonth());}
+function diasUteisMes(ano,mes){
+  const dias=[];const d=new Date(ano,mes,1);
+  while(d.getMonth()===mes){if(d.getDay()!==0&&d.getDay()!==6)dias.push(new Date(d));d.setDate(d.getDate()+1);}
+  return dias;
+}
+function diasUteisRestantes(){
+  const h=hoje(),fim=new Date(h.getFullYear(),h.getMonth()+1,0);
+  let d=0,x=new Date(h);x.setDate(x.getDate()+1);
+  while(x<=fim){if(x.getDay()!==0&&x.getDay()!==6)d++;x.setDate(x.getDate()+1);}return d;
+}
+function diasComSabRestantes(){
+  const h=hoje(),fim=new Date(h.getFullYear(),h.getMonth()+1,0);
+  let d=0,x=new Date(h);x.setDate(x.getDate()+1);
+  while(x<=fim){if(x.getDay()!==0)d++;x.setDate(x.getDate()+1);}return d;
+}
+function isoParaData(iso){return iso?iso.split("T")[0]:"";}
+
+// ── FRASES (30+) ──────────────────────────────────────────────────────────────
+const FRASES=[
+  {f:"Vendas não são sobre produtos, são sobre pessoas.",a:"Zig Ziglar",t:"Rapport: antes de falar do produto, pergunte sobre o negócio do cliente. Interesse genuíno gera confiança."},
+  {f:"A diferença entre o possível e o impossível está na determinação.",a:"Tommy Lasorda",t:"SPIN Selling: explore Situação, Problema, Implicação e Necessidade antes de oferecer solução."},
+  {f:"Cada 'não' te aproxima de um 'sim'.",a:"Brian Tracy",t:"Regra dos 3 contatos: 80% das vendas acontecem na 3ª ou 4ª abordagem. Persista."},
+  {f:"Sucesso é a soma de pequenos esforços repetidos dia após dia.",a:"Robert Collier",t:"Prova social: 'Mais de X estabelecimentos do seu bairro já usam a Ton.' Mostre números reais."},
+  {f:"Não encontre clientes para seus produtos. Encontre produtos para seus clientes.",a:"Seth Godin",t:"Técnica do espelho: adapte seu ritmo e linguagem ao perfil do cliente para gerar empatia."},
+  {f:"Entusiasmo é a faísca que transforma conhecimento em ação.",a:"Dale Carnegie",t:"Urgência real: 'Essa condição é válida só até sexta.' Prazos reais aceleram decisões."},
+  {f:"O segredo do sucesso em vendas é fazer perguntas, não afirmações.",a:"Neil Rackham",t:"AIDA: Atenção → Interesse → Desejo → Ação. Conduza o cliente por cada etapa conscientemente."},
+  {f:"Trate cada cliente como se fosse o único.",a:"Joe Girard",t:"Ancoragem: apresente o Smart primeiro para o T3 parecer mais acessível por comparação."},
+  {f:"A persistência realiza o impossível.",a:"Napoleon Hill",t:"Follow-up: ligue 24h após a visita. 80% dos vendedores não fazem isso e perdem a venda."},
+  {f:"Venda com o coração, não só com a cabeça.",a:"Howard Schultz",t:"Storytelling: 'Conheço um dono de bar aqui perto que aumentou 30% as vendas com a Ton.' Histórias vendem."},
+  {f:"Seu rendimento nunca excederá seu desenvolvimento pessoal.",a:"Jim Rohn",t:"Gatilho da reciprocidade: ofereça algo de valor antes de pedir a venda. Uma dica, um dado de mercado."},
+  {f:"A venda começa quando o cliente diz não.",a:"Earl Nightingale",t:"Objeção como oportunidade: 'Entendo. O que te preocupa exatamente?' Escuta ativa resolve objeções."},
+  {f:"Qualidade nunca é um acidente. É sempre resultado de esforço inteligente.",a:"John Ruskin",t:"Cross-sell: após fechar uma venda, pergunte se o cliente conhece alguém que também precisaria."},
+  {f:"O campeão de vendas é aquele que transforma rejeição em combustível.",a:"Frank Bettger",t:"Técnica do silêncio: após apresentar o preço, fique em silêncio. Quem fala primeiro, perde."},
+  {f:"Não espere. A hora nunca será ideal.",a:"Napoleon Hill",t:"Técnica do 'sim, sim': faça perguntas que o cliente responda com 'sim' antes de fechar."},
+  {f:"Grandes vendedores são grandes ouvintes.",a:"Roy Bartell",t:"Mapa de influência: identifique quem mais influencia a decisão do cliente e trabalhe essa pessoa."},
+  {f:"Faça o que você ama e o sucesso virá naturalmente.",a:"Steve Jobs",t:"Demonstração prática: mostre o app da Ton funcionando no celular do cliente. Ver é crer."},
+  {f:"Disciplina é a ponte entre metas e conquistas.",a:"Jim Rohn",t:"Técnica dos 3 benefícios: sempre apresente 3 vantagens antes do preço. Construa valor primeiro."},
+  {f:"O maior risco é não correr nenhum risco.",a:"Mark Zuckerberg",t:"Urgência de escassez: 'Tenho poucas vagas disponíveis para esse bônus de ativação.' Crie senso de raridade."},
+  {f:"Cada cliente satisfeito é a melhor propaganda.",a:"Philip Kotler",t:"NPS pessoal: pergunte ao cliente 'De 0 a 10, indicaria para um amigo?' e peça a indicação na hora."},
+  {f:"Seu sucesso depende de quantas pessoas você ajuda.",a:"Dan Kennedy",t:"Técnica da pergunta hipotética: 'Se eu conseguir isso, você fecha?' Testa o comprometimento."},
+  {f:"Vencedores encontram maneiras; perdedores encontram desculpas.",a:"Alan Sugar",t:"Roteiro de 60 segundos: saiba apresentar sua proposta em 1 minuto. Atenção é curta no varejo."},
+  {f:"A sorte favorece os preparados.",a:"Louis Pasteur",t:"Pré-chamada: pesquise o tipo do negócio antes da visita. Chegue com dados do segmento dele."},
+  {f:"Construa relacionamentos antes de precisar deles.",a:"Harvey Mackay",t:"Técnica do espelho físico: sorria, incline-se ligeiramente e faça contato visual. Linguagem corporal importa."},
+  {f:"Cada manhã traz uma nova oportunidade de fazer diferença.",a:"Og Mandino",t:"Meta de atividade diária: defina quantas visitas por dia, não só quantas vendas. Controle o que você controla."},
+  {f:"O entusiasmo move o mundo.",a:"Arthur Balfour",t:"Técnica do trial close: 'Se a gente fechar hoje, você prefere a entrega amanhã ou depois?' Avança o processo."},
+  {f:"Vendas é uma transferência de entusiasmo.",a:"Zig Ziglar",t:"Pós-venda como pré-venda: clientes satisfeitos indicam. Ligue após 15 dias e peça 2 indicações."},
+  {f:"Seja a solução que o mercado precisa.",a:"Gary Vaynerchuk",t:"Técnica da perda: 'Cada mês sem a maquininha é dinheiro na mesa dos concorrentes.' Mostre o custo de não comprar."},
+  {f:"Persistência é o preço da vitória.",a:"Ayrton Senna",t:"Funil de visitas: para 1 venda, planeje 3 visitas. Para 10 vendas, 30 visitas. Monte seu funil semanal."},
+  {f:"O detalhe faz a diferença entre o ordinário e o extraordinário.",a:"Jimmy Johnson",t:"Técnica da concordância: sempre encontre um ponto de concordância com o cliente antes de avançar."},
+  {f:"Acredite que você pode e você já está na metade do caminho.",a:"Theodore Roosevelt",t:"Visualização de meta: toda manhã visualize as vendas do dia antes de sair. Atletas de elite fazem isso."},
+];
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let S={
+  registros:load("ton_reg",[]),
+  metas:load("ton_metas",{}),
+  jornadas:load("ton_jornadas",[]),
+  jornadaAtiva:load("ton_jativa",null),
+  contatos:load("ton_cont",{}),
+  aba:"analise",
+  modal:null, // {tipo, dados}
+  selReg:{a:hoje().getFullYear(),m:hoje().getMonth()},
+  selMeta:{a:hoje().getFullYear(),m:hoje().getMonth()},
+  selRel:{a:hoje().getFullYear(),m:hoje().getMonth()},
+  selMapa:{a:hoje().getFullYear(),m:hoje().getMonth()},
+  selJor:{a:hoje().getFullYear(),m:hoje().getMonth()},
+  mapaTodos:false,
+  posVendasFiltro:"pendentes",
+  editJornada:null,
+};
+
+function set(patch){
+  Object.assign(S,patch);
+  if(patch.registros)save("ton_reg",S.registros);
+  if(patch.metas)save("ton_metas",S.metas);
+  if(patch.jornadas)save("ton_jornadas",S.jornadas);
+  if(patch.jornadaAtiva!==undefined)save("ton_jativa",S.jornadaAtiva);
+  if(patch.contatos)save("ton_cont",S.contatos);
+  render();
+}
+
+// ── CALCULOS ─────────────────────────────────────────────────────────────────
+function calcMes(ch){
+  const c=getC();
+  const cli=S.registros.filter(r=>r.mes===ch&&r.tipo==="cli");
+  const be=S.registros.filter(r=>r.mes===ch&&r.tipo==="bex");
+  const com=cli.reduce((s,r)=>s+(r.comissao||0),0);
+  const bauto=Math.floor(cli.length/c.cada)*c.bonus;
+  const bext=be.reduce((s,r)=>s+(r.valor||0),0);
+  const total=com+bauto+bext;
+  const meta=S.metas[ch]||{vendas:0,valor:0};
+  const pct=meta.vendas>0?Math.min(100,(cli.length/meta.vendas)*100):0;
+  const pctVal=meta.valor>0?Math.min(100,(total/meta.valor)*100):0;
+  return{cli,be,com,bauto,bext,total,meta,pct,pctVal,
+    smart:cli.filter(r=>r.equip==="Smart").length,
+    t3:cli.filter(r=>r.equip==="T3").length};
+}
+
+// ── DOM HELPERS ───────────────────────────────────────────────────────────────
+function el(tag,attr,...ch){
+  const e=document.createElement(tag);
+  if(attr)Object.entries(attr).forEach(([k,v])=>{
+    if(k==="style"&&typeof v==="object")Object.assign(e.style,v);
+    else if(k.startsWith("on"))e.addEventListener(k.slice(2).toLowerCase(),v);
+    else if(k==="cls")e.className=v;
+    else if(k==="html")e.innerHTML=v;
+    else e.setAttribute(k,v);
+  });
+  ch.flat(3).forEach(c=>{if(c!=null&&c!==false)e.appendChild(typeof c==="string"||typeof c==="number"?document.createTextNode(String(c)):c);});
+  return e;
+}
+function dv(st,...ch){return el("div",{style:st},...ch);}
+function sp(txt,st){return el("span",{style:st},txt);}
+function btn(txt,cb,st,cls){return el("button",{onclick:cb,style:Object.assign({cursor:"pointer",border:"none",fontFamily:"inherit"},st||{}),cls:cls||""},txt);}
+function inp(ph,val,cb,st){
+  const i=el("input",{placeholder:ph,cls:"inp",style:st||{}});
+  i.value=val||"";i.addEventListener("input",cb);return i;
+}
+function lbl(txt){return el("label",{cls:"lbl"},txt);}
+function sep(){return dv({height:"1px",background:"#F0F2F5",margin:"8px 0"});}
+function rowItem(l,v,cor,bold){
+  return dv({display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"},
+    sp(l,{fontSize:"13px",color:CV.suave}),
+    sp(v,{fontSize:"13px",fontWeight:bold?"700":"500",color:cor||CV.texto})
+  );
+}
+function secCard(title,...ch){
+  const c=dv({background:CV.branco,borderRadius:"16px",padding:"16px",marginBottom:"12px",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"});
+  if(title)c.appendChild(dv({fontSize:"13px",fontWeight:"700",color:CV.texto,marginBottom:"10px"},title));
+  ch.flat(2).forEach(x=>{if(x)c.appendChild(x);});
+  return c;
+}
+function mesAnoSel(a,m,cb){
+  const meses=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  const anos=[2026,2027,2028];
+  const wr=dv({display:"flex",gap:"8px",marginBottom:"12px"});
+  const sm=el("select",{cls:"sel"});meses.forEach((n,i)=>{const o=el("option",{value:i},n);if(i===m)o.selected=true;sm.appendChild(o);});
+  sm.addEventListener("change",e=>cb(a,parseInt(e.target.value)));
+  const sa=el("select",{cls:"sel"});anos.forEach(y=>{const o=el("option",{value:y},String(y));if(y===a)o.selected=true;sa.appendChild(o);});
+  sa.addEventListener("change",e=>cb(parseInt(e.target.value),m));
+  wr.append(sm,sa);return wr;
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function showModal(tipo,dados){set({modal:{tipo,dados}});}
+function closeModal(){set({modal:null});}
+
+function buildModal(titulo,onClose,...children){
+  const bg=dv({position:"fixed",inset:"0",background:"rgba(0,0,0,0.55)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:"400",padding:"0"});
+  bg.addEventListener("click",e=>{if(e.target===bg)onClose();});
+  const box=dv({background:CV.branco,borderRadius:"20px 20px 0 0",padding:"20px",width:"100%",maxWidth:"480px",maxHeight:"90vh",overflowY:"auto"});
+  box.appendChild(dv({width:"40px",height:"4px",background:"#E5E7EB",borderRadius:"99px",margin:"0 auto 16px"}));
+  if(titulo)box.appendChild(dv({display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"},
+    dv({fontSize:"16px",fontWeight:"800",color:CV.texto},titulo),
+    btn("✕",onClose,{background:"none",fontSize:"20px",color:CV.suave})
+  ));
+  children.flat(3).forEach(c=>{if(c)box.appendChild(c);});
+  bg.appendChild(box);return bg;
+}
+
+function modalCliente(inicial,onSave,onClose){
+  const c=getC();
+  let nome=inicial?.nome||"",bairro=inicial?.bairro||"",equip=inicial?.equip||"Smart",wpp=inicial?.whatsapp||"",cep=inicial?.cep||"",dataVenda=inicial?.dataVenda||isoParaData(new Date().toISOString());
+  const iNome=inp("Nome do cliente",nome,e=>nome=e.target.value);
+  const iBairro=inp("Bairro",bairro,e=>bairro=e.target.value);
+  const iWpp=inp("5511999999999",wpp,e=>wpp=e.target.value.replace(/\D/g,""));
+  const iCep=inp("00000000",cep,e=>cep=e.target.value.replace(/\D/g,"").slice(0,8));
+  const iData=el("input",{type:"date",cls:"inp"});iData.value=dataVenda;iData.addEventListener("change",e=>dataVenda=e.target.value);
+  const tipoWr=dv({display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"14px"});
+  function renderTipo(){
+    tipoWr.innerHTML="";
+    ["Smart","T3"].forEach(t=>{
+      const b=dv({padding:"12px 8px",border:"2px solid "+(equip===t?CV.verde:"#E5E7EB"),borderRadius:"12px",background:equip===t?CV.vfundo:CV.branco,cursor:"pointer",textAlign:"center",transition:"all 0.2s"});
+      b.appendChild(dv({fontSize:"15px",fontWeight:"800",color:equip===t?CV.verde:CV.suave},t));
+      b.appendChild(dv({fontSize:"12px",color:equip===t?CV.vesc:CV.suave},fmtR(c[t])));
+      b.addEventListener("click",()=>{equip=t;renderTipo();});
+      tipoWr.appendChild(b);
+    });
+  }
+  renderTipo();
+  const bSalvar=btn(inicial?"Salvar Alterações":"Cadastrar Cliente",()=>{
+    if(!nome.trim()||!bairro.trim())return alert("Preencha nome e bairro.");
+    onSave({nome:nome.trim(),bairro:bairro.trim(),equip,comissao:c[equip],whatsapp:wpp,cep,dataVenda});
+  },{width:"100%",padding:"14px",background:CV.verde,color:CV.branco,borderRadius:"12px",fontSize:"15px",fontWeight:"700"});
+  return buildModal(inicial?"✏️ Editar Cliente":"👤 Cadastrar Cliente",onClose,
+    lbl("Nome *"),iNome,lbl("Bairro *"),iBairro,
+    lbl("Data da Venda"),iData,
+    lbl("WhatsApp"),iWpp,lbl("CEP"),iCep,
+    lbl("Equipamento *"),tipoWr,bSalvar
+  );
+}
+
+function modalMeta(isEdit,onClose){
+  const ch=chAtual();
+  const atual=S.metas[ch]||{vendas:0};
+  let vendas=isEdit?atual.vendas:0;
+  const c=getC();
+  const du=diasUteisMes(hoje().getFullYear(),hoje().getMonth());
+  const prev=dv({background:CV.vfundo,borderRadius:"10px",padding:"12px",marginBottom:"14px"});
+  function updatePrev(){
+    prev.innerHTML="";
+    const vd=du.length>0?(vendas/du.length).toFixed(1):0;
+    const valEst=Math.round(vendas/c.cada)*c.bonus+vendas*((c.Smart+c.T3)/2);
+    prev.appendChild(dv({fontSize:"11px",color:CV.vesc,fontWeight:"600",marginBottom:"6px"},"📊 Projeção"));
+    prev.appendChild(dv({display:"flex",justifyContent:"space-around",textAlign:"center"},
+      dv({},dv({fontSize:"22px",fontWeight:"800",color:CV.verde},String(vendas)),dv({fontSize:"10px",color:CV.suave},"vendas/mês")),
+      dv({width:"1px",background:CV.verde+"30"}),
+      dv({},dv({fontSize:"22px",fontWeight:"800",color:CV.verde},String(vd)),dv({fontSize:"10px",color:CV.suave},"vendas/dia")),
+      dv({width:"1px",background:CV.verde+"30"}),
+      dv({},dv({fontSize:"16px",fontWeight:"800",color:CV.verde},du.length+"d"),dv({fontSize:"10px",color:CV.suave},"dias úteis"))
+    ));
+  }
+  updatePrev();
+  const iVendas=el("input",{type:"number",min:"0",placeholder:"Ex: 30",cls:"inp",style:{fontSize:"24px",fontWeight:"800",textAlign:"center",color:CV.verde,border:"2px solid "+CV.verde}});
+  iVendas.value=vendas||"";
+  iVendas.addEventListener("input",e=>{vendas=parseInt(e.target.value)||0;updatePrev();});
+  const bSalvar=btn("Confirmar Meta",()=>{
+    if(!vendas)return alert("Informe a quantidade de vendas.");
+    const c2=getC();
+    const valEst=Math.round(vendas/c2.cada)*c2.bonus+vendas*((c2.Smart+c2.T3)/2);
+    const obj={vendas,valor:valEst,cadastradoEm:isEdit?undefined:new Date().toISOString()};
+    if(isEdit&&S.metas[ch])obj.cadastradoEm=S.metas[ch].cadastradoEm;
+    set({metas:{...S.metas,[ch]:obj},modal:null});
+  },{width:"100%",padding:"14px",background:CV.verde,color:CV.branco,borderRadius:"12px",fontSize:"15px",fontWeight:"700"});
+  return buildModal("🎯 Meta do Mês",onClose,
+    lbl("Quantas vendas você quer fazer este mês?"),
+    iVendas,prev,bSalvar
+  );
+}
+
+function modalBonusExtra(mes,onClose){
+  let tipo="",val="";
+  const iTipo=inp("Ex: Campanha de aceleração",tipo,e=>tipo=e.target.value);
+  const iVal=inp("Valor R$",val,e=>val=e.target.value.replace(/[^0-9,.]/g,""));
+  const bSalvar=btn("Registrar Bônus",()=>{
+    const v=parseFloat(val.replace(",","."));
+    if(!tipo.trim()||!v)return alert("Preencha tipo e valor.");
+    const novo={id:Date.now(),tipo:"bex",bonusTipo:tipo.trim(),valor:v,data:new Date().toISOString(),mes};
+    set({registros:[novo,...S.registros],modal:null});
+  },{width:"100%",padding:"14px",background:CV.azul,color:CV.branco,borderRadius:"12px",fontSize:"15px",fontWeight:"700"});
+  return buildModal("🎁 Bônus Extra",onClose,lbl("Tipo do bônus *"),iTipo,lbl("Valor (R$) *"),iVal,bSalvar);
+}
+
+function modalJornada(onClose){
+  const h2=hoje();
+  const ativa=S.jornadaAtiva;
+  const bAcao=btn(ativa?"⏹ Finalizar Trabalho":"▶ Iniciar Trabalho",()=>{
+    if(ativa){
+      const fim=new Date().toISOString();
+      const dur=(new Date(fim)-new Date(ativa.inicio))/60000;
+      set({jornadas:[{...ativa,fim,duracaoMin:Math.round(dur)},...S.jornadas],jornadaAtiva:null,modal:null});
+    }else{
+      set({jornadaAtiva:{id:Date.now(),inicio:new Date().toISOString(),fim:null,mes:chAtual()},modal:null});
+    }
+  },{width:"100%",padding:"14px",background:ativa?CV.verm:CV.verde,color:CV.branco,borderRadius:"12px",fontSize:"15px",fontWeight:"700"});
+  return buildModal(ativa?"⏱️ Em Andamento":"⏱️ Jornada",onClose,
+    dv({textAlign:"center",padding:"10px 0"},
+      dv({fontSize:"40px",marginBottom:"8px"},ativa?"🟢":"⚪"),
+      dv({fontSize:"14px",color:CV.suave,marginBottom:"4px"},h2.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})),
+      dv({fontSize:"32px",fontWeight:"800",color:CV.texto,marginBottom:"16px"},h2.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})),
+      ativa?dv({fontSize:"12px",color:CV.suave,marginBottom:"14px"},"Início: "+fmtHM(ativa.inicio)):null,
+      bAcao
+    )
+  );
+}
+
+function modalEditJornada(j,onClose){
+  let inicio=j.inicio.slice(0,16);
+  let fim=j.fim?j.fim.slice(0,16):"";
+  const iIni=el("input",{type:"datetime-local",cls:"inp"});iIni.value=inicio;iIni.addEventListener("change",e=>inicio=e.target.value);
+  const iFim=el("input",{type:"datetime-local",cls:"inp"});iFim.value=fim;iFim.addEventListener("change",e=>fim=e.target.value);
+  const bSalvar=btn("Salvar",()=>{
+    if(!inicio)return;
+    const ni=new Date(inicio).toISOString();
+    const nf=fim?new Date(fim).toISOString():null;
+    const dur=nf?(new Date(nf)-new Date(ni))/60000:j.duracaoMin;
+    const updated={...j,inicio:ni,fim:nf,duracaoMin:Math.round(dur||0)};
+    set({jornadas:S.jornadas.map(x=>x.id===j.id?updated:x),modal:null});
+  },{width:"100%",padding:"14px",background:CV.verde,color:CV.branco,borderRadius:"12px",fontSize:"15px",fontWeight:"700"});
+  return buildModal("✏️ Editar Jornada",onClose,lbl("Início"),iIni,lbl("Fim"),iFim,bSalvar);
+}
+
+function modalConfirmDel(id,onClose){
+  return buildModal("",onClose,
+    dv({textAlign:"center",padding:"10px 0"},
+      dv({fontSize:"40px",marginBottom:"12px"},"🗑️"),
+      dv({fontSize:"16px",fontWeight:"700",color:CV.texto,marginBottom:"8px"},"Remover registro?"),
+      dv({fontSize:"13px",color:CV.suave,marginBottom:"20px"},"Esta ação não pode ser desfeita."),
+      dv({display:"flex",gap:"10px"},
+        btn("Cancelar",onClose,{flex:"1",padding:"13px",borderRadius:"12px",border:"1px solid #E5E7EB",background:CV.branco,fontSize:"14px",fontWeight:"600"}),
+        btn("Remover",()=>{set({registros:S.registros.filter(r=>r.id!==id),jornadas:S.jornadas.filter(j=>j.id!==id),modal:null});},{flex:"1",padding:"13px",borderRadius:"12px",background:CV.verm,color:CV.branco,fontSize:"14px",fontWeight:"700"})
+      )
+    )
+  );
+}
+
+// ── TELA ANÁLISE ──────────────────────────────────────────────────────────────
+function telaAnalise(){
+  const ch=chAtual();const m=calcMes(ch);const c=getC();
+  const h2=hoje();
+  const du=diasUteisMes(h2.getFullYear(),h2.getMonth());
+  const diaAtualIdx=du.findIndex(d=>d.getDate()===h2.getDate()&&d.getMonth()===h2.getMonth());
+  const duPassados=diaAtualIdx>=0?diaAtualIdx+1:du.length;
+  const metaVendas=m.meta.vendas||0;
+  const metaDiaria=du.length>0?(metaVendas/du.length).toFixed(1):0;
+  const restantes=getDiasUteisRestantes2();
+  const vendFalta=Math.max(0,metaVendas-m.cli.length);
+  const metaDiariaRest=restantes>0?(vendFalta/restantes).toFixed(1):0;
+  const esperadoHoje=du.length>0?Math.round((metaVendas/du.length)*duPassados):0;
+  const statusMTD=m.cli.length>=esperadoHoje?"ahead":"behind";
+  const frase=FRASES[(h2.getDate()*3+h2.getMonth())%FRASES.length];
+
+  // MTD por dia (para mini gráfico)
+  const mtdData=du.map((d,i)=>{
+    const ds=chStr(d.getFullYear(),d.getMonth())+"-"+String(d.getDate()).padStart(2,"0");
+    const vendDia=S.registros.filter(r=>r.tipo==="cli"&&r.mes===ch&&(r.dataVenda||r.data.split("T")[0])===ds).length;
+    const acum=du.slice(0,i+1).reduce((s,dd)=>{
+      const dds=chStr(dd.getFullYear(),dd.getMonth())+"-"+String(dd.getDate()).padStart(2,"0");
+      return s+S.registros.filter(r=>r.tipo==="cli"&&r.mes===ch&&(r.dataVenda||r.data.split("T")[0])===dds).length;
+    },0);
+    const metaAcum=Math.round((metaVendas/du.length)*(i+1));
+    const isPast=d<=h2;
+    return{dia:d.getDate(),acum:isPast?acum:null,metaAcum,isPast};
+  });
+
+  const wrap=dv({display:"flex",flexDirection:"column",gap:"12px",paddingBottom:"80px"});
+
+  // Hero card - VENDAS em destaque
+  const hero=dv({background:"linear-gradient(135deg, #00A868 0%, #007A4C 100%)",borderRadius:"20px",padding:"20px",color:CV.branco,marginBottom:"0",boxShadow:"0 4px 16px rgba(0,168,104,0.3)"});
+  hero.appendChild(dv({fontSize:"11px",opacity:"0.8",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"4px"},nomeMesAno(h2.getFullYear(),h2.getMonth())));
+  
+  // Vendas grandes
+  const heroMain=dv({display:"flex",alignItems:"flex-end",gap:"12px",marginBottom:"14px"});
+  heroMain.appendChild(dv({},
+    dv({fontSize:"11px",opacity:"0.8",marginBottom:"2px"},"Vendas realizadas"),
+    dv({fontSize:"52px",fontWeight:"800",lineHeight:"1"},String(m.cli.length)),
+  ));
+  if(metaVendas>0){
+    heroMain.appendChild(dv({paddingBottom:"8px",opacity:"0.7"},
+      dv({fontSize:"14px"},"/"),
+      dv({fontSize:"28px",fontWeight:"700"},String(metaVendas)),
+      dv({fontSize:"11px",opacity:"0.8"},"meta")
+    ));
+  }
+  hero.appendChild(heroMain);
+
+  // Barra progresso vendas
+  if(metaVendas>0){
+    const pct=Math.min(100,(m.cli.length/metaVendas)*100);
+    const barBg=dv({background:"rgba(255,255,255,0.25)",borderRadius:"99px",height:"8px",marginBottom:"10px"});
+    const barFill=dv({width:pct+"%",height:"100%",background:pct>=100?"#FFD700":CV.branco,borderRadius:"99px"});
+    barBg.appendChild(barFill);hero.appendChild(barBg);
+    // Stats row
+    const stats=dv({display:"flex",justifyContent:"space-between"});
+    [[String(metaDiaria),"meta/dia"],[String(restantes),"dias úteis rest."],[String(metaDiariaRest),"vendas/dia p/ bater"]].forEach(([v,l])=>{
+      stats.appendChild(dv({textAlign:"center"},dv({fontSize:"16px",fontWeight:"800"},v),dv({fontSize:"9px",opacity:"0.8"},l)));
+    });
+    hero.appendChild(stats);
+  }
+  wrap.appendChild(hero);
+
+  // MTD Visual — grade de bolinhas por venda
+  if(metaVendas>0&&du.length>0){
+    const mtdCard=secCard("📈 Evolução MTD");
+
+    // Linha do tempo compacta acima
+    const timeWrap=dv({position:"relative",marginBottom:"16px"});
+    const timeBar=dv({height:"4px",background:"#E5E7EB",borderRadius:"99px",position:"relative",margin:"18px 0 6px"});
+    // Progresso realizado
+    const timeReal=dv({position:"absolute",left:"0",top:"0",height:"100%",background:CV.verde,borderRadius:"99px",width:Math.min(100,(m.cli.length/metaVendas)*100)+"%",transition:"width 0.6s"});
+    // Marcador MTD esperado
+    const mtdPct=Math.min(100,(esperadoHoje/metaVendas)*100);
+    const mtdMarker=dv({position:"absolute",top:"-6px",width:"16px",height:"16px",borderRadius:"50%",background:statusMTD==="ahead"?CV.verde:CV.verm,border:"2px solid #fff",boxShadow:"0 2px 6px rgba(0,0,0,0.2)",transform:"translateX(-50%)",left:mtdPct+"%",display:"flex",alignItems:"center",justifyContent:"center"});
+    mtdMarker.appendChild(sp("▼",{fontSize:"7px",color:CV.branco,lineHeight:"1"}));
+    // Marcador realizado
+    const realPct=Math.min(100,(m.cli.length/metaVendas)*100);
+    const realMarker=dv({position:"absolute",top:"-6px",width:"16px",height:"16px",borderRadius:"50%",background:CV.branco,border:"2px solid "+CV.verde,boxShadow:"0 2px 6px rgba(0,0,0,0.15)",transform:"translateX(-50%)",left:realPct+"%"});
+    timeBar.append(timeReal,mtdMarker,realMarker);
+    // Labels
+    const timeLabels=dv({display:"flex",justifyContent:"space-between",fontSize:"9px",color:CV.suave,marginTop:"4px"});
+    timeLabels.appendChild(sp("0"));
+    timeLabels.appendChild(sp(Math.round(metaVendas/2)+" (metade)"));
+    timeLabels.appendChild(sp(String(metaVendas)+" ✓"));
+    const timeLegend=dv({display:"flex",gap:"12px",justifyContent:"center",marginTop:"8px"});
+    [[statusMTD==="ahead"?CV.verde:CV.verm,"▼ MTD esperado ("+esperadoHoje+")"],[CV.verde,"● Realizado ("+m.cli.length+")"]].forEach(([cor,txt])=>{
+      timeLegend.appendChild(dv({display:"flex",alignItems:"center",gap:"4px"},dv({fontSize:"12px",color:cor},txt.split(" ")[0]),sp(txt.slice(txt.indexOf(" ")+1),{fontSize:"10px",color:CV.suave})));
+    });
+    timeWrap.append(timeBar,timeLabels,timeLegend);
+    mtdCard.appendChild(timeWrap);
+
+    // Grade de bolinhas — cada bolinha = 1 venda da meta
+    const maxDots=Math.min(metaVendas,60); // limita visual em 60
+    const dotsTitle=dv({fontSize:"11px",fontWeight:"600",color:CV.suave,marginBottom:"8px"},
+      "Progresso por venda"+(metaVendas>60?" (mostrando 60 de "+metaVendas+")":"")
+    );
+    mtdCard.appendChild(dotsTitle);
+    const dotsGrid=dv({display:"flex",flexWrap:"wrap",gap:"4px",marginBottom:"10px"});
+    for(let i=0;i<maxDots;i++){
+      const isFeita=i<m.cli.length;
+      const isMTD=i===esperadoHoje-1; // marca a posição MTD
+      const dot=dv({
+        width:"16px",height:"16px",borderRadius:"50%",
+        background:isFeita?CV.verde:"#E5E7EB",
+        border:isMTD?"2px solid "+(statusMTD==="ahead"?CV.verde:CV.verm):"2px solid transparent",
+        boxShadow:isMTD?"0 0 0 2px "+(statusMTD==="ahead"?CV.verde+"40":CV.verm+"40"):"none",
+        position:"relative",
+        transition:"background 0.3s",
+        flexShrink:"0"
+      });
+      if(isMTD){
+        dot.title="MTD: "+esperadoHoje+"ª venda";
+      }
+      dotsGrid.appendChild(dot);
+    }
+    mtdCard.appendChild(dotsGrid);
+
+    // Legenda dots
+    mtdCard.appendChild(dv({display:"flex",gap:"14px",flexWrap:"wrap"},
+      dv({display:"flex",alignItems:"center",gap:"5px"},dv({width:"12px",height:"12px",borderRadius:"50%",background:CV.verde,flexShrink:"0"})  ,sp("Realizada",{fontSize:"10px",color:CV.suave})),
+      dv({display:"flex",alignItems:"center",gap:"5px"},dv({width:"12px",height:"12px",borderRadius:"50%",background:"#E5E7EB",flexShrink:"0"}),sp("Pendente",{fontSize:"10px",color:CV.suave})),
+      dv({display:"flex",alignItems:"center",gap:"5px"},dv({width:"12px",height:"12px",borderRadius:"50%",background:"#E5E7EB",border:"2px solid "+(statusMTD==="ahead"?CV.verde:CV.verm),flexShrink:"0"}),sp("Posição MTD",{fontSize:"10px",color:CV.suave}))
+    ));
+
+    // Status resumo
+    const diff=m.cli.length-esperadoHoje;
+    const statusBox=dv({marginTop:"12px",borderRadius:"10px",padding:"10px 14px",
+      background:diff>0?CV.vfundo:diff===0?"#F0F9FF":"#FFF1F1",
+      border:"1px solid "+(diff>0?CV.verde+"50":diff===0?CV.azul+"50":CV.verm+"50")
+    });
+    statusBox.appendChild(dv({fontSize:"13px",fontWeight:"700",color:diff>0?CV.vesc:diff===0?CV.azul:CV.verm},
+      diff>0?"🚀 "+diff+" venda"+(diff>1?"s":"")+" à frente do MTD!":diff===0?"✅ Exatamente no MTD":"⚠️ "+Math.abs(diff)+" venda"+(Math.abs(diff)>1?"s":"")+" abaixo do MTD"
+    ));
+    statusBox.appendChild(dv({fontSize:"11px",color:CV.suave,marginTop:"3px"},
+      "Esperado até hoje: "+esperadoHoje+" · Realizado: "+m.cli.length+" · Faltam: "+Math.max(0,metaVendas-m.cli.length)
+    ));
+    mtdCard.appendChild(statusBox);
+    wrap.appendChild(mtdCard);
+    setTimeout(()=>{},50);
+  }
+
+  // Cards valores (secundários)
+  const valGrid=dv({display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"0"});
+  const proxBonus=m.cli.length%c.cada===0&&m.cli.length>0?c.cada:c.cada-(m.cli.length%c.cada);
+  valGrid.append(
+    dv({background:CV.branco,borderRadius:"14px",padding:"14px",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"},
+      dv({fontSize:"10px",color:CV.suave,marginBottom:"3px"},"Ganhos no mês"),
+      dv({fontSize:"20px",fontWeight:"800",color:CV.verde},fmtR(m.total)),
+      dv({fontSize:"10px",color:"#9CA3AF",marginTop:"3px"},"comissões + bônus")
+    ),
+    dv({background:CV.branco,borderRadius:"14px",padding:"14px",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"},
+      dv({fontSize:"10px",color:CV.suave,marginBottom:"3px"},"Falta (R$)"),
+      dv({fontSize:"20px",fontWeight:"800",color:m.meta.valor&&m.total>=m.meta.valor?CV.verde:CV.verm},fmtR(Math.max(0,(m.meta.valor||0)-m.total))),
+      dv({fontSize:"10px",color:"#9CA3AF",marginTop:"3px"},m.meta.valor&&m.total>=m.meta.valor?"🎉 Meta batida!":"valor pendente")
+    ),
+    dv({background:CV.branco,borderRadius:"14px",padding:"14px",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"},
+      dv({fontSize:"10px",color:CV.suave,marginBottom:"3px"},"Smart / T3"),
+      dv({fontSize:"20px",fontWeight:"800",color:CV.texto},m.smart+" / "+m.t3),
+      dv({fontSize:"10px",color:"#9CA3AF",marginTop:"3px"},"vendas por modelo")
+    ),
+    dv({background:CV.branco,borderRadius:"14px",padding:"14px",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"},
+      dv({fontSize:"10px",color:CV.suave,marginBottom:"3px"},"Próximo bônus"),
+      dv({fontSize:"20px",fontWeight:"800",color:CV.amar},proxBonus+" venda"+(proxBonus!==1?"s":"")),
+      dv({fontSize:"10px",color:"#9CA3AF",marginTop:"3px"},"+"+fmtR(c.bonus)+" a cada "+c.cada)
+    )
+  );
+  wrap.appendChild(valGrid);
+
+  // Pós-venda alerta
+  const posHoje=S.registros.filter(r=>r.tipo==="cli").filter(r=>{
+    const d=Math.floor((hoje()-new Date(r.data))/86400000);
+    return d===15||d===30||d===45;
+  });
+  if(posHoje.length>0){
+    const pv=dv({background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:"14px",padding:"14px"});
+    pv.appendChild(dv({fontSize:"12px",fontWeight:"700",color:"#C2410C",marginBottom:"6px"},"🔔 Pós-venda hoje ("+posHoje.length+")"));
+    posHoje.slice(0,3).forEach(r=>{
+      const d=Math.floor((hoje()-new Date(r.data))/86400000);
+      pv.appendChild(dv({fontSize:"12px",color:"#92400E",marginBottom:"2px"},"• "+r.nome+" – "+d+" dias"));
+    });
+    pv.appendChild(btn("Ver tudo →",()=>set({aba:"posvendas"}),{background:"none",border:"1px solid #FED7AA",borderRadius:"6px",padding:"4px 10px",color:"#C2410C",fontSize:"11px",marginTop:"6px"}));
+    wrap.appendChild(pv);
+  }
+
+  // Detalhamento
+  const det=secCard("💰 Detalhamento");
+  det.appendChild(rowItem("Comissões ("+m.cli.length+" vendas)",fmtR(m.com),CV.verde));
+  det.appendChild(rowItem("Bônus auto ("+Math.floor(m.cli.length/c.cada)+"×)",fmtR(m.bauto),CV.verde));
+  det.appendChild(rowItem("Bônus extras",fmtR(m.bext),CV.azul));
+  det.appendChild(sep());
+  det.appendChild(rowItem("Total do mês",fmtR(m.total),CV.verde,true));
+  wrap.appendChild(det);
+
+  // Motivação
+  const mot=dv({background:CV.branco,borderRadius:"16px",padding:"16px",borderLeft:"4px solid "+CV.verde,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"});
+  mot.appendChild(dv({fontSize:"10px",fontWeight:"700",color:CV.verde,textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"},"✨ Motivação do Dia"));
+  mot.appendChild(dv({fontSize:"13px",fontStyle:"italic",color:CV.texto,lineHeight:"1.6",marginBottom:"4px"},'"'+frase.f+'"'));
+  mot.appendChild(dv({fontSize:"11px",color:CV.suave,marginBottom:"10px"},"— "+frase.a));
+  const tec=dv({background:CV.cinza,borderRadius:"8px",padding:"10px"});
+  tec.appendChild(dv({fontSize:"10px",fontWeight:"700",color:CV.vesc,marginBottom:"3px"},"💡 Técnica do dia"));
+  tec.appendChild(dv({fontSize:"11px",color:CV.suave,lineHeight:"1.6"},frase.t));
+  mot.appendChild(tec);
+  wrap.appendChild(mot);
+
+  // Backup
+  const bk=secCard("💾 Backup");
+  const bkRow=dv({display:"flex",gap:"8px"});
+  bkRow.appendChild(btn("⬇️ Exportar",exportar,{flex:"1",padding:"10px",background:CV.verde,color:CV.branco,borderRadius:"10px",fontWeight:"600",fontSize:"13px"}));
+  const fi=el("input",{type:"file",accept:"application/json",style:{display:"none"}});
+  fi.addEventListener("change",e=>{if(e.target.files[0])importar(e.target.files[0]);e.target.value="";});
+  bkRow.appendChild(btn("⬆️ Importar",()=>fi.click(),{flex:"1",padding:"10px",background:"transparent",color:CV.verde,border:"1.5px solid "+CV.verde,borderRadius:"10px",fontWeight:"600",fontSize:"13px"}));
+  bk.appendChild(bkRow);bk.appendChild(fi);
+  wrap.appendChild(bk);
+  return wrap;
+}
+function getDiasUteisRestantes2(){
+  const h=hoje(),fim=new Date(h.getFullYear(),h.getMonth()+1,0);
+  let d=0,x=new Date(h);x.setDate(x.getDate()+1);
+  while(x<=fim){if(x.getDay()!==0&&x.getDay()!==6)d++;x.setDate(x.getDate()+1);}return d;
+}
+
+// ── TELA CADASTRO ─────────────────────────────────────────────────────────────
+function telaCadastro(){
+  const ch=chStr(S.selReg.a,S.selReg.m);
+  const cliSel=S.registros.filter(r=>r.mes===ch&&r.tipo==="cli");
+  const beSel=S.registros.filter(r=>r.mes===ch&&r.tipo==="bex");
+  const c=getC();
+  const wrap=dv({display:"flex",flexDirection:"column",paddingBottom:"80px"});
+
+  // Abas cliente/bonus
+  const tabs=dv({display:"flex",background:CV.branco,borderRadius:"12px",padding:"4px",marginBottom:"12px",gap:"4px",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"});
+  const subAba=S._subAba||"cli";
+  ["cli","bex"].forEach((id,i)=>{
+    const label=i===0?"👤 Clientes":"🎁 Bônus Extra";
+    tabs.appendChild(btn(label,()=>set({_subAba:id}),{flex:"1",padding:"9px 4px",borderRadius:"9px",fontSize:"12px",fontWeight:"600",background:subAba===id?CV.verde:"transparent",color:subAba===id?CV.branco:CV.suave,border:"none"}));
+  });
+  wrap.appendChild(tabs);
+  wrap.appendChild(mesAnoSel(S.selReg.a,S.selReg.m,(a,m)=>set({selReg:{a,m}})));
+
+  if(subAba==="cli"){
+    wrap.appendChild(btn("+ Cadastrar Novo Cliente",()=>showModal("cli",null),{width:"100%",padding:"13px",background:CV.verde,color:CV.branco,borderRadius:"12px",fontSize:"14px",fontWeight:"700",marginBottom:"14px"}));
+    wrap.appendChild(dv({fontSize:"12px",fontWeight:"700",color:CV.texto,marginBottom:"8px"},"Clientes de "+nomeMesAno(S.selReg.a,S.selReg.m)+" ("+cliSel.length+")"));
+    if(!cliSel.length)wrap.appendChild(dv({textAlign:"center",color:CV.suave,padding:"24px 0",fontSize:"13px"},"Nenhum cliente neste mês"));
+    else cliSel.forEach((r,i)=>{
+      const idx=cliSel.length-i;const isBon=idx%c.cada===0;
+      const card=dv({background:CV.branco,borderRadius:"14px",padding:"14px",marginBottom:"8px",border:"1.5px solid "+(isBon?CV.verde:"transparent"),boxShadow:"0 1px 4px rgba(0,0,0,0.06)"});
+      const top=dv({display:"flex",justifyContent:"space-between",alignItems:"flex-start"});
+      const left=dv({flex:"1"});
+      const nr=dv({display:"flex",alignItems:"center",gap:"6px",flexWrap:"wrap",marginBottom:"3px"});
+      nr.appendChild(sp(r.nome,{fontSize:"13px",fontWeight:"700",color:CV.texto}));
+      nr.appendChild(el("span",{cls:"pill",style:{background:r.equip==="Smart"?CV.vfundo:"#EFF6FF",color:r.equip==="Smart"?CV.vesc:CV.azul}},r.equip));
+      if(isBon)nr.appendChild(el("span",{cls:"pill",style:{background:CV.verde,color:CV.branco}},"+BÔNUS"));
+      left.appendChild(nr);
+      left.appendChild(dv({fontSize:"11px",color:CV.suave},r.bairro+(r.cep?" · CEP "+r.cep:"")+(r.dataVenda?" · "+r.dataVenda:"")));
+      if(r.whatsapp)left.appendChild(dv({fontSize:"11px",color:CV.suave},"📱 "+r.whatsapp));
+      const right=dv({textAlign:"right",minWidth:"80px"});
+      right.appendChild(dv({fontSize:"14px",fontWeight:"700",color:CV.verde},fmtR(r.comissao)));
+      const ar=dv({display:"flex",gap:"6px",justifyContent:"flex-end",marginTop:"4px"});
+      ar.appendChild(btn("✏️",()=>showModal("editCli",r),{fontSize:"13px",background:"none",color:CV.azul,padding:"2px 4px"}));
+      ar.appendChild(btn("🗑️",()=>showModal("del",r.id),{fontSize:"13px",background:"none",color:CV.verm,padding:"2px 4px"}));
+      right.appendChild(ar);
+      top.append(left,right);card.appendChild(top);wrap.appendChild(card);
+    });
+  } else {
+    const form=dv({background:"#EFF6FF",borderRadius:"14px",padding:"16px",marginBottom:"12px"});
+    form.appendChild(dv({fontSize:"12px",fontWeight:"700",color:CV.azul,marginBottom:"10px"},"🎁 Registrar Bônus Extra"));
+    let bt="",bv="";
+    const iT=inp("Tipo do bônus",bt,e=>bt=e.target.value);
+    const iV=inp("Valor R$",bv,e=>bv=e.target.value.replace(/[^0-9,.]/g,""));
+    form.append(iT,iV);
+    form.appendChild(btn("Registrar Bônus",()=>{
+      const v=parseFloat(bv.replace(",","."));
+      if(!bt.trim()||!v)return alert("Preencha tipo e valor.");
+      set({registros:[{id:Date.now(),tipo:"bex",bonusTipo:bt.trim(),valor:v,data:new Date().toISOString(),mes:ch},...S.registros],_dummy:Date.now()});
+    },{width:"100%",padding:"11px",background:CV.azul,color:CV.branco,borderRadius:"10px",fontSize:"13px",fontWeight:"700"}));
+    wrap.appendChild(form);
+    wrap.appendChild(dv({fontSize:"12px",fontWeight:"700",color:CV.texto,marginBottom:"8px"},"Bônus de "+nomeMesAno(S.selReg.a,S.selReg.m)));
+    if(!beSel.length)wrap.appendChild(dv({textAlign:"center",color:CV.suave,padding:"16px 0",fontSize:"13px"},"Nenhum bônus extra"));
+    else beSel.forEach(r=>{
+      const c2=dv({background:CV.branco,borderRadius:"12px",padding:"12px",marginBottom:"8px",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"});
+      c2.appendChild(dv({},dv({fontSize:"13px",fontWeight:"600",color:CV.texto},r.bonusTipo),dv({fontSize:"10px",color:CV.suave},fmtDH(r.data))));
+      const ri=dv({textAlign:"right"});ri.appendChild(dv({fontSize:"14px",fontWeight:"700",color:CV.azul},fmtR(r.valor)));ri.appendChild(btn("🗑️",()=>showModal("del",r.id),{fontSize:"13px",background:"none",color:CV.verm,padding:"2px 4px"}));
+      c2.appendChild(ri);wrap.appendChild(c2);
+    });
+  }
+  return wrap;
+}
+
+// ── TELA CALENDÁRIO ───────────────────────────────────────────────────────────
+function telaCalendario(){
+  const {a,m}=S.selReg;const ch=chStr(a,m);
+  const wrap=dv({display:"flex",flexDirection:"column",paddingBottom:"80px"});
+  wrap.appendChild(mesAnoSel(a,m,(na,nm)=>set({selReg:{a:na,m:nm}})));
+  const nav=dv({display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"12px"});
+  nav.appendChild(btn("‹",()=>{const d=new Date(a,m-1,1);set({selReg:{a:d.getFullYear(),m:d.getMonth()}});},{background:"none",fontSize:"24px",color:CV.verde,padding:"4px 10px"}));
+  nav.appendChild(dv({fontSize:"15px",fontWeight:"700",color:CV.texto,textTransform:"capitalize"},nomeMesAno(a,m)));
+  nav.appendChild(btn("›",()=>{const d=new Date(a,m+1,1);set({selReg:{a:d.getFullYear(),m:d.getMonth()}});},{background:"none",fontSize:"24px",color:CV.verde,padding:"4px 10px"}));
+  wrap.appendChild(nav);
+  const cliM=S.registros.filter(r=>r.tipo==="cli"&&r.mes===ch);
+  const beM=S.registros.filter(r=>r.tipo==="bex"&&r.mes===ch);
+  const dias=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+  const hdr=dv({display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:"3px",marginBottom:"4px"});
+  dias.forEach(d=>hdr.appendChild(dv({textAlign:"center",fontSize:"10px",fontWeight:"700",color:CV.suave,padding:"4px 0"},d)));
+  wrap.appendChild(hdr);
+  const grid=dv({display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:"3px"});
+  const primeiro=new Date(a,m,1);const ultimo=new Date(a,m+1,0);
+  for(let i=0;i<primeiro.getDay();i++)grid.appendChild(dv({minHeight:"54px"}));
+  const h2=hoje();
+  for(let d=1;d<=ultimo.getDate();d++){
+    const ds=ch+"-"+String(d).padStart(2,"0");
+    const vD=cliM.filter(r=>(r.dataVenda||r.data.split("T")[0])===ds);
+    const bD=beM.filter(r=>r.data.startsWith(ds));
+    const tot=vD.reduce((s,r)=>s+(r.comissao||0),0)+bD.reduce((s,r)=>s+(r.valor||0),0);
+    const isH=a===h2.getFullYear()&&m===h2.getMonth()&&d===h2.getDate();
+    const temV=vD.length>0||bD.length>0;
+    const cell=dv({borderRadius:"10px",padding:"5px 3px",textAlign:"center",background:isH?CV.verde:temV?CV.vfundo:CV.branco,border:isH?"2px solid "+CV.vesc:temV?"1.5px solid "+CV.verde+"50":"1px solid #F0F2F5",minHeight:"54px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",gap:"2px"});
+    cell.appendChild(dv({fontSize:"12px",fontWeight:isH||temV?"700":"400",color:isH?CV.branco:temV?CV.vesc:CV.suave},String(d)));
+    if(temV){
+      cell.appendChild(dv({fontSize:"9px",fontWeight:"700",color:isH?CV.branco:CV.verde,lineHeight:"1.2",textAlign:"center"},fmtR(tot).replace("R$\u00A0","R$")));
+      if(vD.length>0)cell.appendChild(dv({fontSize:"9px",color:isH?"rgba(255,255,255,0.85)":CV.suave},vD.length+(vD.length===1?"v":"vs")));
+    }
+    grid.appendChild(cell);
+  }
+  wrap.appendChild(dv({background:CV.branco,borderRadius:"16px",padding:"14px",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"},grid));
+  wrap.appendChild(dv({display:"flex",gap:"16px",justifyContent:"center",padding:"8px 0",fontSize:"10px",color:CV.suave},
+    dv({display:"flex",alignItems:"center",gap:"4px"},dv({width:"10px",height:"10px",borderRadius:"3px",background:CV.verde}),"Hoje"),
+    dv({display:"flex",alignItems:"center",gap:"4px"},dv({width:"10px",height:"10px",borderRadius:"3px",background:CV.vfundo,border:"1px solid "+CV.verde}),"Com vendas")
+  ));
+  // Lista do dia com mais detalhes
+  const hoje2=h2;
+  const ds2=ch+"-"+String(hoje2.getDate()).padStart(2,"0");
+  const vHoje=cliM.filter(r=>(r.dataVenda||r.data.split("T")[0])===ds2);
+  if(a===hoje2.getFullYear()&&m===hoje2.getMonth()&&vHoje.length>0){
+    const ld=secCard("📋 Vendas de Hoje");
+    vHoje.forEach(r=>{
+      const ri=dv({padding:"8px 0",borderBottom:"1px solid "+CV.cinza,display:"flex",justifyContent:"space-between",alignItems:"center"});
+      ri.appendChild(dv({},dv({fontSize:"13px",fontWeight:"600",color:CV.texto},r.nome),dv({fontSize:"11px",color:CV.suave},r.bairro+" · "+r.equip)));
+      ri.appendChild(dv({fontSize:"13px",fontWeight:"700",color:CV.verde},fmtR(r.comissao)));
+      ld.appendChild(ri);
+    });
+    wrap.appendChild(ld);
+  }
+  return wrap;
+}
+
+// ── TELA METAS ────────────────────────────────────────────────────────────────
+function telaMetas(){
+  const ch=chStr(S.selMeta.a,S.selMeta.m);
+  const isAtual=ch===chAtual();
+  const m=calcMes(ch);
+  const du=diasUteisMes(S.selMeta.a,S.selMeta.m);
+  const metaD=m.meta.vendas>0&&du.length>0?(m.meta.vendas/du.length).toFixed(1):0;
+  const jaCad=!!S.metas[chAtual()]?.cadastradoEm;
+  const c=getC();
+  const wrap=dv({display:"flex",flexDirection:"column",gap:"12px",paddingBottom:"80px"});
+  wrap.appendChild(mesAnoSel(S.selMeta.a,S.selMeta.m,(a,mm)=>set({selMeta:{a,m:mm}})));
+  if(isAtual){
+    const btns=dv({display:"flex",gap:"8px"});
+    btns.appendChild(btn(jaCad?"✅ Meta Cadastrada":"📌 Cadastrar Meta",()=>{if(!jaCad)showModal("meta",{isEdit:false});},{flex:"1",padding:"12px 8px",background:jaCad?"#D1D5DB":CV.verde,color:CV.branco,borderRadius:"10px",fontSize:"12px",fontWeight:"700",cursor:jaCad?"not-allowed":"pointer"}));
+    btns.appendChild(btn("✏️ Editar Meta",()=>showModal("meta",{isEdit:true}),{flex:"1",padding:"12px 8px",background:"transparent",color:CV.verde,border:"1.5px solid "+CV.verde,borderRadius:"10px",fontSize:"12px",fontWeight:"700"}));
+    wrap.appendChild(btns);
+  }
+  if(m.meta.vendas>0){
+    // Card principal
+    const mc=dv({background:"linear-gradient(135deg,#00A868,#007A4C)",borderRadius:"16px",padding:"18px",color:CV.branco,boxShadow:"0 4px 16px rgba(0,168,104,0.25)"});
+    mc.appendChild(dv({fontSize:"11px",opacity:"0.8",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"8px"},"Meta de "+nomeMesAno(S.selMeta.a,S.selMeta.m)));
+    mc.appendChild(dv({display:"flex",alignItems:"flex-end",gap:"10px",marginBottom:"12px"},
+      dv({},dv({fontSize:"11px",opacity:"0.8"},"Vendas"),dv({fontSize:"44px",fontWeight:"800",lineHeight:"1"},String(m.cli.length))),
+      dv({paddingBottom:"6px",opacity:"0.7"},dv({fontSize:"16px"},"/"),dv({fontSize:"24px",fontWeight:"700"},String(m.meta.vendas)),dv({fontSize:"11px"},"meta"))
+    ));
+    const pct=Math.min(100,(m.cli.length/m.meta.vendas)*100);
+    const bb=dv({background:"rgba(255,255,255,0.25)",borderRadius:"99px",height:"8px",marginBottom:"10px"});
+    bb.appendChild(dv({width:pct+"%",height:"100%",background:pct>=100?"#FFD700":CV.branco,borderRadius:"99px"}));
+    mc.appendChild(bb);
+    mc.appendChild(dv({display:"flex",justifyContent:"space-between",fontSize:"11px",opacity:"0.85"},
+      sp(pct.toFixed(1)+"% atingido"),sp(metaD+" vendas/dia útil")
+    ));
+    wrap.appendChild(mc);
+    // Gráfico pizza canvas
+    const pzCard=secCard("📊 Atingimento");
+    const pzRow=dv({display:"flex",justifyContent:"space-around",alignItems:"center"});
+    function pizzaC(pct2,title,label){
+      const wr=dv({textAlign:"center"});
+      wr.appendChild(dv({fontSize:"11px",color:CV.suave,marginBottom:"6px"},title));
+      const cv=el("canvas",{width:"90",height:"90",style:{width:"90px",height:"90px",display:"block",margin:"0 auto"}});
+      wr.appendChild(cv);
+      wr.appendChild(dv({fontSize:"14px",fontWeight:"800",color:CV.verde,marginTop:"4px"},label));
+      setTimeout(()=>{
+        const ctx=cv.getContext("2d");
+        const cx=45,cy=45,r=35,inn=22;
+        ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle="#E5E7EB";ctx.fill();
+        const ang=(Math.max(0,Math.min(100,pct2))/100)*Math.PI*2;
+        ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+ang);ctx.closePath();ctx.fillStyle=CV.verde;ctx.fill();
+        ctx.beginPath();ctx.arc(cx,cy,inn,0,Math.PI*2);ctx.fillStyle=CV.branco;ctx.fill();
+        ctx.font="bold 12px sans-serif";ctx.fillStyle=CV.verde;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(Math.round(pct2)+"%",cx,cy);
+      },60);
+      return wr;
+    }
+    pzRow.appendChild(pizzaC(pct,"Vendas",m.cli.length+"/"+m.meta.vendas));
+    pzRow.appendChild(dv({width:"1px",height:"60px",background:CV.cinza}));
+    pzRow.appendChild(pizzaC(m.pctVal,"Valor",fmtR(m.total)));
+    pzCard.appendChild(pzRow);
+    wrap.appendChild(pzCard);
+    // Detalhamento
+    const det=secCard("💰 Valores");
+    det.appendChild(rowItem("Meta estimada",fmtR(m.meta.valor||0),CV.texto));
+    det.appendChild(rowItem("Realizado",fmtR(m.total),CV.verde));
+    det.appendChild(rowItem("Falta",fmtR(Math.max(0,(m.meta.valor||0)-m.total)),CV.verm));
+    det.appendChild(sep());
+    det.appendChild(rowItem("Comissões",fmtR(m.com),CV.verde));
+    det.appendChild(rowItem("Bônus auto ("+Math.floor(m.cli.length/c.cada)+"×)",fmtR(m.bauto),CV.verde));
+    det.appendChild(rowItem("Bônus extras",fmtR(m.bext),CV.azul));
+    wrap.appendChild(det);
+  } else {
+    wrap.appendChild(dv({background:CV.branco,borderRadius:"16px",padding:"24px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"},
+      dv({fontSize:"40px",marginBottom:"12px"},"🎯"),
+      dv({fontSize:"15px",fontWeight:"600",color:CV.texto,marginBottom:"6px"},"Nenhuma meta definida"),
+      dv({fontSize:"13px",color:CV.suave},"Defina sua meta para "+nomeMesAno(S.selMeta.a,S.selMeta.m))
+    ));
+  }
+  return wrap;
+}
+
+// ── TELA RELATÓRIO ────────────────────────────────────────────────────────────
+function telaRelatorio(){
+  const {a,m}=S.selRel;const ch=chStr(a,m);
+  const isAtual=ch===chAtual();
+  const mc=calcMes(ch);const c=getC();
+  const du=diasUteisMes(a,m);
+  const h2=hoje();const diaAt=h2.getDate();const diasM=new Date(a,m+1,0).getDate();
+  const duRest=getDiasUteisRestantes2();const duSab=diasComSabRestantes();
+  const smFalt=Math.max(0,(mc.meta.vendas||0)-mc.cli.length);
+  const metaD=mc.meta.vendas>0&&du.length>0?(mc.meta.vendas/du.length).toFixed(1):0;
+  const vendFalta=Math.max(0,mc.meta.vendas-mc.cli.length);
+  const mDia=duRest>0?(vendFalta/duRest).toFixed(1):"0";
+  const mSab=duSab>0?(vendFalta/duSab).toFixed(1):"0";
+  const wrap=dv({display:"flex",flexDirection:"column",gap:"12px",paddingBottom:"80px"});
+  wrap.appendChild(mesAnoSel(a,m,(na,nm)=>set({selRel:{a:na,m:nm}})));
+  // Header
+  const hdr=dv({background:"linear-gradient(135deg,#00A868,#007A4C)",borderRadius:"16px",padding:"16px",color:CV.branco,boxShadow:"0 4px 16px rgba(0,168,104,0.25)"});
+  hdr.appendChild(dv({fontSize:"11px",opacity:"0.8",textTransform:"uppercase",letterSpacing:"1px"},"Relatório "+(isAtual?"Parcial":"Fechado")));
+  hdr.appendChild(dv({fontSize:"18px",fontWeight:"800",marginTop:"2px"},nomeMesAno(a,m)));
+  if(isAtual)hdr.appendChild(dv({fontSize:"12px",opacity:"0.85",marginTop:"4px"},
+    (mc.total>=(mc.meta.valor||0)*(diaAt/diasM)?"✅ Acima":"⚠️ Abaixo")+" do ritmo · Dia "+diaAt+"/"+diasM
+  ));
+  wrap.appendChild(hdr);
+  // Vendas
+  const vs=secCard("📦 Vendas");
+  vs.appendChild(dv({display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"8px",marginBottom:"0"},
+    dv({background:CV.cinza,borderRadius:"10px",padding:"10px",textAlign:"center"},dv({fontSize:"10px",color:CV.suave},"Total"),dv({fontSize:"22px",fontWeight:"800",color:CV.verde},String(mc.cli.length)),dv({fontSize:"10px",color:CV.suave},"/"+(mc.meta.vendas||"-"))),
+    dv({background:CV.cinza,borderRadius:"10px",padding:"10px",textAlign:"center"},dv({fontSize:"10px",color:CV.suave},"Smart"),dv({fontSize:"22px",fontWeight:"800",color:CV.verde},String(mc.smart))),
+    dv({background:CV.cinza,borderRadius:"10px",padding:"10px",textAlign:"center"},dv({fontSize:"10px",color:CV.suave},"T3"),dv({fontSize:"22px",fontWeight:"800",color:CV.azul},String(mc.t3)))
+  ));
+  wrap.appendChild(vs);
+  // Financeiro
+  const fin=secCard("💰 Financeiro");
+  fin.appendChild(rowItem("Comissões",fmtR(mc.com),CV.verde));
+  fin.appendChild(rowItem("Bônus auto",fmtR(mc.bauto),CV.verde));
+  fin.appendChild(rowItem("Bônus extras",fmtR(mc.bext),CV.azul));
+  fin.appendChild(sep());
+  fin.appendChild(rowItem("Total",fmtR(mc.total),CV.verde,true));
+  fin.appendChild(rowItem("Meta (est.)",fmtR(mc.meta.valor||0)));
+  fin.appendChild(rowItem("Falta",fmtR(Math.max(0,(mc.meta.valor||0)-mc.total)),CV.verm,true));
+  wrap.appendChild(fin);
+  // Atingimento
+  const at=secCard("📊 Atingimento");
+  const pct=Math.min(100,(mc.cli.length/(mc.meta.vendas||1))*100);
+  at.appendChild(dv({fontSize:"20px",fontWeight:"800",color:CV.verde,marginBottom:"6px"},pct.toFixed(1)+"% das vendas"));
+  const pb=dv({background:"#E5E7EB",borderRadius:"99px",height:"10px",marginBottom:"8px"});
+  pb.appendChild(dv({width:pct+"%",height:"100%",background:CV.verde,borderRadius:"99px"}));
+  at.appendChild(pb);
+  if(isAtual){
+    at.appendChild(dv({display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginTop:"8px"},
+      dv({background:CV.vfundo,borderRadius:"10px",padding:"10px"},dv({fontSize:"10px",color:CV.vesc},"Meta diária"),dv({fontSize:"18px",fontWeight:"800",color:CV.verde},metaD+" v/dia"),dv({fontSize:"10px",color:CV.suave},du.length+" dias úteis")),
+      dv({background:"#FFF7ED",borderRadius:"10px",padding:"10px"},dv({fontSize:"10px",color:"#C2410C"},"Ritmo p/ bater"),dv({fontSize:"18px",fontWeight:"800",color:"#EA580C"},mDia+" v/dia"),dv({fontSize:"10px",color:CV.suave},duRest+" dias restantes"))
+    ));
+  }
+  wrap.appendChild(at);
+  // Oportunidades em aberto
+  if(smFalt>0){
+    const ab=secCard("📋 Oportunidades em Aberto ("+smFalt+")");
+    for(let i=0;i<Math.min(smFalt,8);i++){
+      const r=dv({border:"1.5px dashed "+CV.verde+"60",borderRadius:"10px",padding:"10px 12px",marginBottom:"6px",display:"flex",alignItems:"center",gap:"8px"});
+      r.append(sp("#"+(mc.cli.length+i+1),{fontSize:"12px",color:CV.verde+"80",fontWeight:"700"}),sp("Venda — aguardando...",{fontSize:"12px",color:CV.suave,fontStyle:"italic"}),sp(fmtR(getC().Smart),{marginLeft:"auto",fontSize:"12px",fontWeight:"700",color:CV.verde}));
+      ab.appendChild(r);
+    }
+    if(smFalt>8)ab.appendChild(dv({fontSize:"11px",color:CV.suave,textAlign:"center"},"+ "+(smFalt-8)+" mais"));
+    wrap.appendChild(ab);
+  }
+  // Sábado
+  if(isAtual){
+    const sug=secCard("🚀 Cenário com Sábado");
+    sug.appendChild(dv({background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:"10px",padding:"12px"},
+      dv({fontSize:"11px",fontWeight:"700",color:"#C2410C",marginBottom:"4px"},"Incluindo sábados"),
+      dv({fontSize:"13px",color:CV.suave},duSab+" dias disponíveis → "+mSab+" vendas/dia"),
+      dv({fontSize:"11px",color:"#C2410C",marginTop:"4px",fontWeight:"600"},"💡 Reduz "+Math.max(0,parseFloat(mDia)-parseFloat(mSab)).toFixed(1)+" vendas/dia vs só úteis")
+    ));
+    wrap.appendChild(sug);
+  }
+  // Lista vendas
+  if(mc.cli.length>0){
+    const lv=secCard("📦 Vendas Realizadas ("+mc.cli.length+")");
+    mc.cli.forEach((r,i)=>{
+      const ri=dv({padding:"8px 0",borderBottom:i<mc.cli.length-1?"1px solid "+CV.cinza:"none",display:"flex",justifyContent:"space-between",alignItems:"center"});
+      ri.appendChild(dv({},dv({fontSize:"13px",fontWeight:"600",color:CV.texto},r.nome),dv({fontSize:"11px",color:CV.suave},r.bairro+" · "+r.equip+(r.dataVenda?" · "+r.dataVenda:""))));
+      ri.appendChild(dv({fontSize:"13px",fontWeight:"700",color:CV.verde},fmtR(r.comissao)));
+      lv.appendChild(ri);
+    });
+    wrap.appendChild(lv);
+  }
+  wrap.appendChild(btn("📥 Baixar Relatório (Imagem)",()=>baixarRel(a,m),{width:"100%",padding:"14px",background:CV.verde,color:CV.branco,borderRadius:"12px",fontSize:"14px",fontWeight:"700"}));
+  return wrap;
+}
+
+// ── TELA JORNADA ──────────────────────────────────────────────────────────────
+function telaJornada(){
+  const {a,m}=S.selJor;const ch=chStr(a,m);
+  const jorMes=S.jornadas.filter(j=>j.mes===ch);
+  const totMin=jorMes.reduce((s,j)=>s+(j.duracaoMin||0),0);
+  const hh=Math.floor(totMin/60);const mm2=totMin%60;
+  const wrap=dv({display:"flex",flexDirection:"column",gap:"12px",paddingBottom:"80px"});
+  wrap.appendChild(mesAnoSel(a,m,(na,nm)=>set({selJor:{a:na,m:nm}})));
+  const res=secCard("📊 Resumo de "+nomeMesAno(a,m));
+  res.appendChild(dv({display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"},
+    dv({background:CV.vfundo,borderRadius:"10px",padding:"12px",textAlign:"center"},dv({fontSize:"10px",color:CV.vesc},"Dias trabalhados"),dv({fontSize:"22px",fontWeight:"800",color:CV.verde},String(jorMes.length))),
+    dv({background:"#EFF6FF",borderRadius:"10px",padding:"12px",textAlign:"center"},dv({fontSize:"10px",color:CV.azul},"Horas totais"),dv({fontSize:"22px",fontWeight:"800",color:CV.azul},hh+"h"+(mm2>0?mm2+"m":"")))
+  ));
+  wrap.appendChild(res);
+  const lst=secCard("Registros ("+jorMes.length+")");
+  if(!jorMes.length)lst.appendChild(dv({textAlign:"center",color:CV.suave,padding:"16px 0",fontSize:"13px"},"Nenhum registro"));
+  else jorMes.forEach(j=>{
+    const dur=j.duracaoMin||0;const hj=Math.floor(dur/60);const mj=dur%60;
+    const it=dv({padding:"10px 0",borderBottom:"1px solid "+CV.cinza});
+    const top2=dv({display:"flex",justifyContent:"space-between",alignItems:"center"});
+    top2.appendChild(dv({},dv({fontSize:"13px",fontWeight:"600",color:CV.texto},fmtD(j.inicio)),dv({fontSize:"11px",color:CV.suave},fmtHM(j.inicio)+" → "+(j.fim?fmtHM(j.fim):"em andamento"))));
+    const ri=dv({display:"flex",gap:"8px",alignItems:"center"});
+    ri.appendChild(dv({fontSize:"13px",fontWeight:"700",color:CV.verde},hj+"h"+(mj>0?mj+"m":"")));
+    ri.appendChild(btn("✏️",()=>showModal("editJor",j),{background:"none",fontSize:"14px",color:CV.azul,padding:"2px 4px"}));
+    ri.appendChild(btn("🗑️",()=>showModal("del",j.id),{background:"none",fontSize:"14px",color:CV.verm,padding:"2px 4px"}));
+    top2.appendChild(ri);it.appendChild(top2);lst.appendChild(it);
+  });
+  wrap.appendChild(lst);
+  return wrap;
+}
+
+// ── TELA PÓS-VENDAS ───────────────────────────────────────────────────────────
+function telaPosVendas(){
+  const todos=S.registros.filter(r=>r.tipo==="cli");
+  const g={15:[],30:[],45:[]};
+  todos.forEach(r=>{
+    const d=Math.floor((hoje()-new Date(r.data))/86400000);
+    if(d>=13&&d<=16)g[15].push({...r,dias:d});
+    else if(d>=28&&d<=31)g[30].push({...r,dias:d});
+    else if(d>=43&&d<=46)g[45].push({...r,dias:d});
+  });
+  const filtro=S.posVendasFiltro||"todos";
+  const wrap=dv({display:"flex",flexDirection:"column",gap:"12px",paddingBottom:"80px"});
+  // Resumo
+  const pendentes=todos.filter(r=>{
+    const d=Math.floor((hoje()-new Date(r.data))/86400000);
+    const p=d>=13&&d<=16?15:d>=28&&d<=31?30:d>=43&&d<=46?45:0;
+    if(!p)return false;
+    return !S.contatos[r.id+"_"+p];
+  });
+  const contTotal=Object.keys(S.contatos).length;
+  wrap.appendChild(dv({display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px"},
+    dv({background:CV.verm,borderRadius:"14px",padding:"14px",color:CV.branco,boxShadow:"0 2px 8px rgba(239,68,68,0.3)"},dv({fontSize:"10px",opacity:"0.85"},"Pendentes hoje"),dv({fontSize:"28px",fontWeight:"800"},String(pendentes.length)),dv({fontSize:"10px",opacity:"0.8"},"clientes aguardando")),
+    dv({background:CV.verde,borderRadius:"14px",padding:"14px",color:CV.branco,boxShadow:"0 2px 8px rgba(0,168,104,0.3)"},dv({fontSize:"10px",opacity:"0.85"},"Contactados"),dv({fontSize:"28px",fontWeight:"800"},String(contTotal)),dv({fontSize:"10px",opacity:"0.8"},"total registrado"))
+  ));
+  // Filtro abas
+  const ftabs=dv({display:"flex",background:CV.branco,borderRadius:"12px",padding:"4px",gap:"4px",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"});
+  ["pendentes","todos","feedbacks"].forEach(id=>{
+    const label=id==="pendentes"?"⚠️ Pendentes":id==="todos"?"Todos":"😊 Feedbacks";
+    ftabs.appendChild(btn(label,()=>set({posVendasFiltro:id}),{flex:"1",padding:"8px 4px",borderRadius:"9px",fontSize:"11px",fontWeight:"600",background:filtro===id?CV.verm:"transparent",color:filtro===id?CV.branco:CV.suave,border:"none"}));
+  });
+  wrap.appendChild(ftabs);
+  if(filtro==="feedbacks"){
+    const comFeedback=todos.filter(r=>{
+      return [15,30,45].some(p=>S.contatos[r.id+"_"+p]);
+    });
+    if(!comFeedback.length)wrap.appendChild(dv({background:CV.branco,borderRadius:"14px",padding:"20px",textAlign:"center",color:CV.suave,fontSize:"13px"},"Nenhum feedback registrado"));
+    else{
+      const fbc=secCard("Feedbacks Registrados ("+comFeedback.length+")");
+      comFeedback.forEach(r=>{
+        const rw=dv({padding:"10px 0",borderBottom:"1px solid "+CV.cinza});
+        rw.appendChild(dv({fontSize:"13px",fontWeight:"600",color:CV.texto},r.nome));
+        [15,30,45].forEach(p=>{
+          const ct=S.contatos[r.id+"_"+p];
+          if(ct)rw.appendChild(dv({fontSize:"11px",color:CV.suave},"• "+p+" dias: "+ct.satisfacao+" em "+fmtD(ct.data)));
+        });
+        fbc.appendChild(rw);
+      });
+      wrap.appendChild(fbc);
+    }
+  } else {
+    [15,30,45].forEach(p=>{
+      let lista=g[p];
+      if(filtro==="pendentes")lista=lista.filter(r=>!S.contatos[r.id+"_"+p]);
+      if(!lista.length&&filtro==="pendentes")return;
+      const sec=dv({});
+      const hasPend=g[p].some(r=>!S.contatos[r.id+"_"+p]);
+      sec.appendChild(dv({fontSize:"12px",fontWeight:"700",color:hasPend&&filtro!=="todos"?"#C2410C":CV.suave,marginBottom:"8px"},(hasPend?"🔔":"✓")+" Contato de "+p+" dias ("+lista.length+")"));
+      if(!lista.length){
+        sec.appendChild(dv({background:CV.branco,borderRadius:"12px",padding:"12px",fontSize:"12px",color:CV.suave,textAlign:"center"},"Nenhum cliente neste período"));
+      } else lista.forEach(r=>{
+        const key=r.id+"_"+p;const reg=S.contatos[key];
+        const c2=dv({background:CV.branco,borderRadius:"14px",padding:"14px",marginBottom:"8px",border:"1.5px solid "+(reg?"#D1FAE5":hasPend?"#FED7AA":"#F0F0F0"),boxShadow:"0 1px 4px rgba(0,0,0,0.06)"});
+        const top2=dv({display:"flex",justifyContent:"space-between",alignItems:"flex-start"});
+        const left=dv({flex:"1"});
+        left.appendChild(dv({fontSize:"13px",fontWeight:"700",color:CV.texto},r.nome));
+        left.appendChild(dv({fontSize:"11px",color:CV.suave},r.bairro+" · "+r.equip+" · "+r.dias+" dias"));
+        if(reg)left.appendChild(dv({fontSize:"11px",color:CV.verde,marginTop:"2px"},"✅ "+reg.satisfacao+" · "+fmtD(reg.data)));
+        else left.appendChild(dv({fontSize:"11px",color:"#C2410C",fontWeight:"600",marginTop:"2px"},"⚠️ Contato pendente"));
+        const right2=dv({display:"flex",flexDirection:"column",gap:"4px",alignItems:"flex-end"});
+        if(r.whatsapp)right2.appendChild(el("a",{href:"https://wa.me/"+r.whatsapp,target:"_blank",style:{fontSize:"11px",background:"#25D366",color:CV.branco,padding:"5px 10px",borderRadius:"8px",textDecoration:"none",fontWeight:"700"}},"WhatsApp"));
+        else right2.appendChild(dv({fontSize:"10px",color:CV.suave,textAlign:"center"},"Sem\nWhatsApp"));
+        if(!reg){
+          const em=dv({display:"flex",gap:"4px",marginTop:"4px"});
+          ["😊","😐","😞"].forEach(s=>em.appendChild(btn(s,()=>{const nc={...S.contatos,[key]:{data:new Date().toISOString(),satisfacao:s}};set({contatos:nc});},{background:"none",border:"1px solid #E5E7EB",borderRadius:"8px",padding:"4px 8px",fontSize:"16px"})));
+          right2.appendChild(em);
+        }
+        top2.append(left,right2);c2.appendChild(top2);sec.appendChild(c2);
+      });
+      wrap.appendChild(sec);
+    });
+  }
+  return wrap;
+}
+
+// ── TELA MAPA ─────────────────────────────────────────────────────────────────
+function telaMapa(){
+  const {a,m}=S.selMapa;const ch=chStr(a,m);
+  const cliF=S.mapaTodos?S.registros.filter(r=>r.tipo==="cli"&&r.cep):S.registros.filter(r=>r.tipo==="cli"&&r.cep&&r.mes===ch);
+  const wrap=dv({display:"flex",flexDirection:"column",gap:"12px",paddingBottom:"80px"});
+  const top2=dv({display:"flex",gap:"8px",alignItems:"flex-end"});
+  const sw=dv({flex:"1"});sw.appendChild(mesAnoSel(a,m,(na,nm)=>{set({selMapa:{a:na,m:nm},mapaTodos:false});}));
+  top2.append(sw,btn(S.mapaTodos?"✓ Todos":"Todos",()=>set({mapaTodos:!S.mapaTodos}),{padding:"9px 12px",background:S.mapaTodos?CV.verde:"transparent",color:S.mapaTodos?CV.branco:CV.verde,border:"1.5px solid "+CV.verde,borderRadius:"10px",fontSize:"12px",fontWeight:"700",whiteSpace:"nowrap",marginBottom:"12px"}));
+  wrap.appendChild(top2);
+  const box=secCard("📍 "+cliF.length+" cliente"+(cliF.length!==1?"s":"")+" com CEP");
+  if(!cliF.length)box.appendChild(dv({textAlign:"center",color:CV.suave,padding:"20px 0",fontSize:"13px"},"Nenhum cliente com CEP cadastrado"));
+  else{
+    cliF.forEach(r=>{
+      const it=dv({display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid "+CV.cinza});
+      it.appendChild(dv({},dv({fontSize:"13px",fontWeight:"600",color:CV.texto},r.nome),dv({fontSize:"11px",color:CV.suave},r.bairro+" · CEP "+r.cep+" · "+r.equip)));
+      it.appendChild(btn("📍",()=>window.open("https://www.google.com/maps/search/"+r.cep+"+Brasil","_blank"),{background:CV.verde,color:CV.branco,border:"none",borderRadius:"8px",padding:"8px 12px",fontSize:"14px"}));
+      box.appendChild(it);
+    });
+    box.appendChild(btn("🗺️ Abrir Todos",()=>window.open("https://www.google.com/maps/search/"+cliF.map(r=>r.cep).join("|")+"+Brasil","_blank"),{width:"100%",marginTop:"12px",padding:"11px",background:CV.azul,color:CV.branco,border:"none",borderRadius:"10px",fontSize:"13px",fontWeight:"700"}));
+  }
+  wrap.appendChild(box);
+  return wrap;
+}
+
+// ── TELA COMISSÕES ────────────────────────────────────────────────────────────
+function telaComissoes(){
+  const atual=getC();
+  let vs=atual.Smart,vt=atual.T3,vb=atual.bonus,vc=atual.cada;
+  const wrap=dv({display:"flex",flexDirection:"column",gap:"12px",paddingBottom:"80px"});
+  // Card atual - melhorado
+  const info=dv({background:"linear-gradient(135deg,#00A868,#007A4C)",borderRadius:"16px",padding:"18px",color:CV.branco,boxShadow:"0 4px 16px rgba(0,168,104,0.25)"});
+  info.appendChild(dv({fontSize:"11px",opacity:"0.8",textTransform:"uppercase",letterSpacing:"1px",marginBottom:"12px"},"Valores Atuais"));
+  const g=dv({display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px"});
+  [["Smart",fmtR(atual.Smart)],["T3",fmtR(atual.T3)],["Bônus /"+atual.cada+"v",fmtR(atual.bonus)]].forEach(([l,v])=>{
+    g.appendChild(dv({background:"rgba(255,255,255,0.18)",borderRadius:"10px",padding:"10px",textAlign:"center"},
+      dv({fontSize:"10px",opacity:"0.8",marginBottom:"4px"},l),
+      dv({fontSize:"16px",fontWeight:"800"},v)
+    ));
+  });
+  info.appendChild(g);
+  wrap.appendChild(info);
+  // Form
+  const form=secCard("✏️ Editar Valores");
+  function numInp(label,val,cor,cb){
+    form.appendChild(dv({fontSize:"12px",fontWeight:"600",color:CV.texto,marginBottom:"5px"},label));
+    const i=el("input",{type:"number",min:"0",placeholder:"0",cls:"inp",style:{fontSize:"16px",fontWeight:"700",border:"2px solid "+cor}});
+    i.value=val;i.addEventListener("input",e=>{cb(parseFloat(e.target.value)||0);updatePrev();});
+    form.appendChild(i);
+  }
+  numInp("Comissão Smart (R$)",vs,CV.verde,v=>vs=v);
+  numInp("Comissão T3 (R$)",vt,CV.azul,v=>vt=v);
+  form.appendChild(sep());
+  numInp("Valor do Bônus (R$)",vb,CV.amar,v=>vb=v);
+  numInp("Bônus a cada quantas vendas",vc,CV.amar,v=>vc=Math.max(1,Math.round(v)));
+  const prev=dv({background:CV.vfundo,borderRadius:"10px",padding:"12px",marginBottom:"14px"});
+  function updatePrev(){
+    prev.innerHTML="";
+    prev.appendChild(dv({fontSize:"11px",color:CV.vesc,fontWeight:"600",marginBottom:"6px"},"📊 Exemplo"));
+    const n=Math.max(1,vc);
+    [[vs,"Smart"],[vt,"T3"]].forEach(([cv2,nome])=>{
+      const ex=n*cv2+Math.floor(n/n)*vb;
+      prev.appendChild(dv({fontSize:"12px",color:CV.suave,marginBottom:"3px"},n+" "+nome+" → comissão "+fmtR(n*cv2)+" + bônus "+fmtR(vb)+" = "+fmtR(ex)));
+    });
+  }
+  updatePrev();
+  form.appendChild(prev);
+  form.appendChild(btn("💾 Salvar Valores",()=>{
+    if(vs<=0||vt<=0||vb<=0||vc<1)return alert("Preencha todos os valores.");
+    save("ton_com",{Smart:vs,T3:vt,bonus:vb,cada:vc});
+    alert("✅ Valores atualizados!");render();
+  },{width:"100%",padding:"14px",background:CV.verde,color:CV.branco,borderRadius:"12px",fontSize:"15px",fontWeight:"700"}));
+  wrap.appendChild(form);
+  wrap.appendChild(dv({background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:"12px",padding:"14px"},
+    dv({fontSize:"12px",fontWeight:"700",color:"#C2410C",marginBottom:"6px"},"⚠️ Atenção"),
+    dv({fontSize:"12px",color:"#92400E",lineHeight:"1.6"},"Alterar os valores afeta cálculos futuros. Registros já salvos mantêm a comissão original.")
+  ));
+  return wrap;
+}
+
+// ── EXPORTAR/IMPORTAR/RELATÓRIO ───────────────────────────────────────────────
+function exportar(){
+  const blob=new Blob([JSON.stringify({registros:S.registros,metas:S.metas,jornadas:S.jornadas,comissoes:getC(),exportadoEm:new Date().toISOString()},null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="ton-backup-"+new Date().toISOString().split("T")[0]+".json";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+function importar(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d.registros||!d.metas)throw 0;
+      if(confirm("Importar backup? Substituirá os dados atuais.")){
+        set({registros:d.registros,metas:d.metas,jornadas:d.jornadas||[]});
+        if(d.comissoes)save("ton_com",d.comissoes);
+        alert("Importado!");
+      }
+    }catch{alert("Arquivo inválido.");}
+  };reader.readAsText(file);
+}
+function baixarRel(ano,mes){
+  const ch=chStr(ano,mes);const mc=calcMes(ch);const isAtual=ch===chAtual();
+  const du=diasUteisMes(ano,mes);const duR=getDiasUteisRestantes2();
+  const mnome=nomeMesAno(ano,mes);
+  const canvas=document.createElement("canvas");canvas.width=1080;canvas.height=1920;
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#00A868";ctx.fillRect(0,0,1080,520);
+  ctx.fillStyle="#F0F2F5";ctx.fillRect(0,520,1080,1400);
+  ctx.fillStyle="rgba(255,255,255,0.12)";ctx.beginPath();ctx.arc(150,200,130,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,0.08)";ctx.beginPath();ctx.arc(950,350,180,0,Math.PI*2);ctx.fill();
+  function txn(t,x,y,sz,cor,al){ctx.font=sz+"px Inter,sans-serif";ctx.fillStyle=cor||"#1A1A2E";ctx.textAlign=al||"left";ctx.fillText(t,x,y);}
+  function txb(t,x,y,sz,cor,al){ctx.font="bold "+sz+"px Inter,sans-serif";ctx.fillStyle=cor||"#1A1A2E";ctx.textAlign=al||"left";ctx.fillText(t,x,y);}
+  txb("Ton Maquininhas",540,100,32,"#fff","center");
+  txb("Resultados",100,200,64,"#fff");
+  txn(mnome.charAt(0).toUpperCase()+mnome.slice(1),100,255,36,"rgba(255,255,255,0.85)");
+  txn(isAtual?"Resultado Parcial":"Resultado Fechado",100,300,28,"rgba(255,255,255,0.7)");
+  txb("Alysson Oliveira",540,430,36,"#fff","center");
+  txn("Comercial Afiliado",540,470,"24","rgba(255,255,255,0.8)","center");
+  function crd(x,y,w,h){ctx.fillStyle="#fff";ctx.shadowColor="rgba(0,0,0,0.08)";ctx.shadowBlur=12;ctx.fillRect(x,y,w,h);ctx.shadowBlur=0;}
+  crd(50,550,460,230);txn("Vendas",80,600,26,CV.suave);txb(String(mc.cli.length),80,670,60,CV.verde);txn("meta: "+(mc.meta.vendas||"-"),80,710,22,CV.suave);
+  crd(570,550,460,230);txn("Ganhos",600,600,26,CV.suave);txb(fmtR(mc.total),600,660,44,CV.verde);txn(mc.pct.toFixed(1)+"% atingido",600,705,22,CV.suave);
+  crd(50,810,460,200);txn("Smart",80,858,24,CV.suave);txb(String(mc.smart),80,920,60,CV.verde);
+  crd(570,810,460,200);txn("T3",600,858,24,CV.suave);txb(String(mc.t3),600,920,60,CV.azul);
+  crd(50,1040,960,110);txn("Atingimento",80,1085,24,CV.suave);
+  ctx.fillStyle="#E5E7EB";ctx.fillRect(80,1098,880,24);
+  ctx.fillStyle=CV.verde;ctx.fillRect(80,1098,880*(Math.min(100,mc.pct)/100),24);
+  txb(mc.pct.toFixed(1)+"%",990,1118,26,CV.verde,"right");
+  crd(50,1180,960,300);txb("Detalhamento",80,1228,28,CV.texto);
+  txn("Comissões",80,1275,24,CV.suave);txb(fmtR(mc.com),990,1275,24,CV.verde,"right");
+  txn("Bônus auto",80,1315,24,CV.suave);txb(fmtR(mc.bauto),990,1315,24,CV.verde,"right");
+  txn("Bônus extras",80,1355,24,CV.suave);txb(fmtR(mc.bext),990,1355,24,CV.azul,"right");
+  ctx.fillStyle="#E5E7EB";ctx.fillRect(80,1376,880,2);
+  txb("Total",80,1415,30,CV.texto);txb(fmtR(mc.total),990,1415,30,CV.verde,"right");
+  if(isAtual&&mc.meta.vendas>0){
+    ctx.fillStyle=CV.vfundo;ctx.fillRect(50,1510,960,130);
+    txb("Projeção de atingimento",80,1558,24,CV.vesc);
+    const metaD2=du.length>0?(mc.meta.vendas/du.length).toFixed(1):0;
+    const restV=Math.max(0,mc.meta.vendas-mc.cli.length);
+    const mDia2=duR>0?(restV/duR).toFixed(1):0;
+    txb(mDia2+" vendas/dia para bater a meta",80,1600,22,CV.vesc);
+    txn(duR+" dias úteis restantes · Meta diária: "+metaD2,80,1628,20,CV.suave);
+  }
+  ctx.fillStyle=CV.verde;ctx.fillRect(0,1830,1080,90);
+  txb("Ton Maquininhas · parceiro.ton.com.br",540,1885,26,"#fff","center");
+  canvas.toBlob(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download="resultado-ton-"+ch+".png";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  },"image/png");
+}
+
+// ── TAB BAR ───────────────────────────────────────────────────────────────────
+const TABS=[
+  {id:"analise",icon:"📊",label:"Análise"},
+  {id:"cadastro",icon:"➕",label:"Cadastro"},
+  {id:"calendario",icon:"📅",label:"Calendário"},
+  {id:"metas",icon:"🎯",label:"Metas"},
+  {id:"relatorio",icon:"📋",label:"Relatório"},
+  {id:"jornada",icon:"⏱️",label:"Jornada"},
+  {id:"posvendas",icon:"🤝",label:"Pós-Venda"},
+  {id:"mapa",icon:"🗺️",label:"Mapa"},
+  {id:"comissoes",icon:"💲",label:"Comissões"},
+];
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render(){
+  const app=document.getElementById("app");
+  app.innerHTML="";
+
+  // Modals
+  if(S.modal){
+    const {tipo,dados}=S.modal;
+    if(tipo==="cli")app.appendChild(modalCliente(null,d=>{
+      const novo={id:Date.now(),tipo:"cli",...d,data:new Date().toISOString(),mes:chStr(new Date(d.dataVenda||Date.now()).getFullYear(),new Date(d.dataVenda||Date.now()).getMonth())};
+      // mes based on dataVenda
+      if(d.dataVenda){const dv=new Date(d.dataVenda);novo.mes=chStr(dv.getFullYear(),dv.getMonth());}
+      set({registros:[novo,...S.registros],modal:null});
+    },closeModal));
+    else if(tipo==="editCli")app.appendChild(modalCliente(dados,d=>{
+      set({registros:S.registros.map(r=>r.id===dados.id?{...r,...d,comissao:getC()[d.equip]}:r),modal:null});
+    },closeModal));
+    else if(tipo==="bex")app.appendChild(modalBonusExtra(chAtual(),closeModal));
+    else if(tipo==="meta")app.appendChild(modalMeta(dados.isEdit,closeModal));
+    else if(tipo==="jornada")app.appendChild(modalJornada(closeModal));
+    else if(tipo==="editJor")app.appendChild(modalEditJornada(dados,closeModal));
+    else if(tipo==="del")app.appendChild(modalConfirmDel(dados,closeModal));
+  }
+
+  // Header — só na análise mostra o total flutuante
+  const hdr=dv({background:"linear-gradient(135deg,#00A868,#007A4C)",padding:"16px 16px 12px",color:CV.branco,display:"flex",alignItems:"center",justifyContent:"space-between"});
+  const title=dv({},dv({fontSize:"10px",opacity:"0.8",letterSpacing:"1px",textTransform:"uppercase"},"Ton Maquininhas"),dv({fontSize:"17px",fontWeight:"800"},"Alysson Oliveira"));
+  hdr.appendChild(title);
+  if(S.aba==="analise"){
+    const ch2=chAtual();const m2=calcMes(ch2);
+    hdr.appendChild(dv({textAlign:"right"},dv({fontSize:"10px",opacity:"0.8"},"ganhos no mês"),dv({fontSize:"18px",fontWeight:"800"},fmtR(m2.total))));
+  }
+  app.appendChild(hdr);
+
+  // Barra de evolução financeira (sempre visível)
+  const ch3=chAtual();const m3=calcMes(ch3);
+  const barraWrap=dv({background:CV.vesc,padding:"10px 16px 14px"});
+  const metaVal3=m3.meta.valor||0;
+  const pctFin=metaVal3>0?Math.min(100,(m3.total/metaVal3)*100):0;
+  const bateuFin=m3.total>=metaVal3&&metaVal3>0;
+  const barraTop=dv({display:"flex",justifyContent:"space-between",color:CV.branco,fontSize:"11px",marginBottom:"6px",opacity:"0.9"});
+  barraTop.appendChild(sp(fmtR(m3.total)));
+  barraTop.appendChild(sp(metaVal3>0?"Meta: "+fmtR(metaVal3):"Meta não definida"));
+  const barraBg=dv({background:"rgba(255,255,255,0.2)",borderRadius:"99px",height:"7px"});
+  const barraFill=dv({width:pctFin+"%",height:"100%",background:bateuFin?"#FFD700":CV.branco,borderRadius:"99px",transition:"width 0.5s"});
+  barraBg.appendChild(barraFill);
+  const barraSub=dv({color:CV.branco,fontSize:"10px",marginTop:"5px",opacity:"0.8",textAlign:"center"},bateuFin?"🏆 META FINANCEIRA BATIDA!":pctFin.toFixed(1)+"% do valor atingido");
+  barraWrap.append(barraTop,barraBg,barraSub);
+  app.appendChild(barraWrap);
+
+  // Conteúdo
+  const content=dv({padding:"12px 14px 0"});
+  if(S.aba==="analise")content.appendChild(telaAnalise());
+  else if(S.aba==="cadastro")content.appendChild(telaCadastro());
+  else if(S.aba==="calendario")content.appendChild(telaCalendario());
+  else if(S.aba==="metas")content.appendChild(telaMetas());
+  else if(S.aba==="relatorio")content.appendChild(telaRelatorio());
+  else if(S.aba==="jornada")content.appendChild(telaJornada());
+  else if(S.aba==="posvendas")content.appendChild(telaPosVendas());
+  else if(S.aba==="mapa")content.appendChild(telaMapa());
+  else if(S.aba==="comissoes")content.appendChild(telaComissoes());
+  app.appendChild(content);
+
+  // FAB
+  const fabWrap=dv({position:"fixed",bottom:"70px",right:"14px",zIndex:"150",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"8px"});
+  if(S.showFAB){
+    [["👤 Cliente",()=>showModal("cli",null)],["🎁 Bônus Extra",()=>showModal("bex",null)],["💼 Jornada",()=>showModal("jornada",null)]].forEach(([l,cb])=>{
+      fabWrap.appendChild(btn(l,()=>{set({showFAB:false});cb();},{display:"flex",alignItems:"center",background:CV.branco,border:"none",borderRadius:"22px",padding:"9px 15px",boxShadow:"0 3px 14px rgba(0,0,0,0.15)",fontSize:"13px",fontWeight:"600",color:CV.texto,whiteSpace:"nowrap"}));
+    });
+  }
+  if(S.jornadaAtiva)fabWrap.appendChild(btn("🚶",()=>showModal("jornada",null),{width:"42px",height:"42px",borderRadius:"50%",background:CV.verm,color:CV.branco,fontSize:"18px",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 3px 12px rgba(239,68,68,0.4)"}));
+  fabWrap.appendChild(btn(S.showFAB?"✕":"+",()=>set({showFAB:!S.showFAB}),{width:"52px",height:"52px",borderRadius:"50%",background:CV.verde,color:CV.branco,fontSize:S.showFAB?"20px":"28px",fontWeight:"700",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 18px rgba(0,168,104,0.45)"}));
+  app.appendChild(fabWrap);
+
+  // Tab bar
+  const tabBar=dv({display:"flex",background:CV.branco,borderTop:"1px solid #E5E7EB",position:"fixed",bottom:"0",left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:"480px",zIndex:"100",padding:"4px 0 6px",overflowX:"auto"});
+  tabBar.style.scrollbarWidth="none";
+  TABS.forEach(({id,icon,label})=>{
+    const b=dv({display:"flex",flexDirection:"column",alignItems:"center",gap:"2px",padding:"6px 8px",cursor:"pointer",minWidth:"52px",flex:"0 0 auto"});
+    b.appendChild(dv({fontSize:"20px",lineHeight:"1"},icon));
+    b.appendChild(dv({fontSize:"9px",fontWeight:"600",color:S.aba===id?CV.verde:"#9CA3AF"},label));
+    if(S.aba===id){
+      const dot=dv({width:"4px",height:"4px",borderRadius:"50%",background:CV.verde,margin:"2px auto 0"});
+      b.appendChild(dot);
+    }
+    b.addEventListener("click",()=>set({aba:id,showFAB:false}));
+    tabBar.appendChild(b);
+  });
+  app.appendChild(tabBar);
+}
+
+render();
+</script>
+</body>
+</html>
